@@ -1,7 +1,7 @@
 name: GitOps Deploy
 
 on:
-  workflow_dispatch:  # 👈 Cho phép trigger bằng tay
+  workflow_dispatch:
     inputs:
       deploy_env:
         description: "Deployment environment (local, staging, production)"
@@ -14,24 +14,23 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    # Thiết lập environment động nếu có input, mặc định là 'local'
     environment: ${{ github.event.inputs.deploy_env || 'local' }}
-
-    env:
-      # Lưu biến deploy_env để dùng bên dưới
-      DEPLOY_ENV: ${{ github.event.inputs.deploy_env || 'local' }}
-      ENV_FILE_CONTENT: ${{ secrets[format('ENV_FILE_CONTENT_{0}', (github.event.inputs.deploy_env || 'local') ) | upper] }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Write .env to file
+      - name: Set ENV_FILE_CONTENT based on deploy_env
         run: |
-          echo "$ENV_FILE_CONTENT" > kustomize/overlays/${{ env.DEPLOY_ENV }}/config.env
+          echo "$ENV_FILE_CONTENT" > kustomize/overlays/${{ github.event.inputs.deploy_env || 'local' }}/config.env
+        env:
+          ENV_FILE_CONTENT: ${{ 
+            github.event.inputs.deploy_env == 'production' && secrets.ENV_FILE_CONTENT_PRODUCTION ||
+            github.event.inputs.deploy_env == 'staging' && secrets.ENV_FILE_CONTENT_STAGING ||
+            secrets.ENV_FILE_CONTENT_LOCAL 
+          }}
 
       - name: Build and Apply Kustomize
         run: |
-          cd kustomize/overlays/${{ env.DEPLOY_ENV }}
+          cd kustomize/overlays/${{ github.event.inputs.deploy_env || 'local' }}
           kustomize build .
