@@ -28,9 +28,9 @@ jobs:
 
       # Step riêng cho STAGING
       - name: Write staging config.env
-        if: ${{ github.event.inputs.deploy_env == 'staging' }}
+        if: ${{ github.event.inputs.deploy_env == 'sandbox' }}
         run: |
-          echo "${{ secrets.ENV_FILE_CONTENT_STAGING }}" > kustomize/overlays/staging/config.env
+          echo "${{ secrets.ENV_FILE_CONTENT_STAGING }}" > kustomize/overlays/sandbox/config.env
 
       # Step riêng cho PRODUCTION
       - name: Write production config.env
