@@ -1,0 +1,24 @@
+name: GitOps Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    environment: local   # ⬅️ map đúng với tên "Environments" bạn tạo trên GitHub
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Write .env to file
+        run: |
+          echo "$ENV_FILE_CONTENT" > kustomize/overlays/local/config.env
+        env:
+          ENV_FILE_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
+
+      - name: Build and Apply Kustomize
+        run: |
+          cd kustomize/overlays/local
+          kustomize build . 
