@@ -1,12 +1,27 @@
 name: GitOps Deploy
 
 on:
+  workflow_dispatch:  # 👈 Cho phép trigger bằng tay
+    inputs:
+      deploy_env:
+        description: "Deployment environment (local, staging, production)"
+        required: true
+        default: "local"
+
   push:
     branches: [main]
 
 jobs:
   deploy:
-    environment: local   # ⬅️ map đúng với tên "Environments" bạn tạo trên GitHub
+    runs-on: ubuntu-latest
+
+    # Thiết lập environment động nếu có input, mặc định là 'local'
+    environment: ${{ github.event.inputs.deploy_env || 'local' }}
+
+    env:
+      # Lưu biến deploy_env để dùng bên dưới
+      DEPLOY_ENV: ${{ github.event.inputs.deploy_env || 'local' }}
+      ENV_FILE_CONTENT: ${{ secrets[format('ENV_FILE_CONTENT_{0}', (github.event.inputs.deploy_env || 'local') ) | upper] }}
 
     steps:
       - name: Checkout code
@@ -14,11 +29,9 @@ jobs:
 
       - name: Write .env to file
         run: |
-          echo "$ENV_FILE_CONTENT" > kustomize/overlays/local/config.env
-        env:
-          ENV_FILE_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
+          echo "$ENV_FILE_CONTENT" > kustomize/overlays/${{ env.DEPLOY_ENV }}/config.env
 
       - name: Build and Apply Kustomize
         run: |
-          cd kustomize/overlays/local
-          kustomize build . 
+          cd kustomize/overlays/${{ env.DEPLOY_ENV }}
+          kustomize build .
