@@ -20,15 +20,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set ENV_FILE_CONTENT based on deploy_env
+      # Step riêng cho LOCAL
+      - name: Write local config.env
+        if: ${{ github.event.inputs.deploy_env == 'local' || github.event.inputs.deploy_env == '' }}
         run: |
-          echo "$ENV_FILE_CONTENT" > kustomize/overlays/${{ github.event.inputs.deploy_env || 'local' }}/config.env
-        env:
-          ENV_FILE_CONTENT: ${{ 
-            github.event.inputs.deploy_env == 'production' && secrets.ENV_FILE_CONTENT_PRODUCTION ||
-            github.event.inputs.deploy_env == 'staging' && secrets.ENV_FILE_CONTENT_STAGING ||
-            secrets.ENV_FILE_CONTENT_LOCAL 
-          }}
+          echo "${{ secrets.ENV_FILE_CONTENT_LOCAL }}" > kustomize/overlays/local/config.env
+
+      # Step riêng cho STAGING
+      - name: Write staging config.env
+        if: ${{ github.event.inputs.deploy_env == 'staging' }}
+        run: |
+          echo "${{ secrets.ENV_FILE_CONTENT_STAGING }}" > kustomize/overlays/staging/config.env
+
+      # Step riêng cho PRODUCTION
+      - name: Write production config.env
+        if: ${{ github.event.inputs.deploy_env == 'production' }}
+        run: |
+          echo "${{ secrets.ENV_FILE_CONTENT_PRODUCTION }}" > kustomize/overlays/production/config.env
 
       - name: Build and Apply Kustomize
         run: |
