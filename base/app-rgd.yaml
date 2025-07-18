@@ -16,7 +16,6 @@ spec:
     status:
       # Status fields with auto-inferred types
       availableReplicas: ${deployment.status.availableReplicas}
-
   resources:
   - id: deployment
     template:

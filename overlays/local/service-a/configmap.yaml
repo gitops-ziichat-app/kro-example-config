@@ -1,0 +1,8 @@
+name: abc-service
+port: 8080
+
+store:
+  mongo:
+    data_user_profile:
+      clientUrl: mongodb://root:secret@localhost:27017
+      dbName: users
